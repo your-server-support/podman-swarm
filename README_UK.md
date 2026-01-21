@@ -1,4 +1,7 @@
-# Podman Swarm - Кластерний оркестратор для Podman
+# Podman Swarm - Кластерний Оркестратор для Podman
+
+> ⚠️ **Статус Проекту: Рання Розробка**  
+> Цей проект перебуває в активній розробці та ще не готовий для production. API та функціонал можуть змінюватися. Використовуйте на власний ризик у production середовищах.
 
 Кластерний оркестратор для Podman з підтримкою Kubernetes маніфестів.
 
@@ -159,6 +162,7 @@ curl -X PUT http://localhost:8080/api/v1/dns/whitelist \
 
 ## Документація
 
+- [TODO_UK.md](TODO_UK.md) - Roadmap розробки та заплановані функції
 - [AGENTS.md](AGENTS.md) - Документація агента
 - [PSCTL_UK.md](PSCTL_UK.md) - Документація CLI інструменту
 - [ARCHITECTURE_UK.md](ARCHITECTURE_UK.md) - Архітектура системи

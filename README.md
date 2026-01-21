@@ -1,5 +1,8 @@
 # Podman Swarm - Cluster Orchestrator for Podman
 
+> ⚠️ **Project Status: Early Development**  
+> This project is in active development and not yet production-ready. APIs and features may change. Use at your own risk in production environments.
+
 A cluster orchestrator for Podman with Kubernetes manifest support.
 
 ## Architecture
@@ -159,6 +162,7 @@ For more details on service communication, see [SERVICE_COMMUNICATION.md](SERVIC
 
 ## Documentation
 
+- [TODO.md](TODO.md) - Development roadmap and planned features
 - [AGENTS.md](AGENTS.md) - Agent documentation
 - [PSCTL.md](PSCTL.md) - CLI tool documentation
 - [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture
