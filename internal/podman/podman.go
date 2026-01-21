@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 
 	nettypes "github.com/containers/common/libnetwork/types"
 	"github.com/containers/podman/v4/pkg/bindings"
@@ -125,7 +126,7 @@ func (c *Client) CreatePod(pod *types.Pod) (string, error) {
 
 	// Set DNS servers if configured
 	if c.dnsIP != "" {
-		s.DNSServers = []string{c.dnsIP}
+		s.DNSServers = []net.IP{net.ParseIP(c.dnsIP)}
 		c.logger.Debugf("Setting DNS server for container %s: %s", pod.Name, c.dnsIP)
 	}
 

@@ -22,10 +22,12 @@ Podman Swarm створений як простий та зручний орке
 - **DNS резолвінг**: Вбудований DNS сервер для резолву сервісів через DNS імена (сумісний з Kubernetes)
 - **DNS Whitelist**: Білий список зовнішніх доменів для контролю DNS резолвінгу
 - **Ingress**: Ingress контролер на кожній ноді для роутингу запитів
-- **Load Balancing**: Автоматичне балансування навантаження між подами
-- **Шифрування**: AES-256-GCM шифрування всіх повідомлень між нодами
-- **Join Token**: Система токенів для безпечного приєднання нод (як в Docker Swarm)
-- **TLS підтримка**: Опціональне TLS шифрування на транспортному рівні
+- **Балансування навантаження**: Автоматичне балансування між подами
+- **Персистентність Стану**: JSON-based сховище з автоматичним відновленням та періодичними backup
+- **Синхронізація Стану**: Автоматична синхронізація стану між нодами кожні 30 секунд
+- **Шифрування**: AES-256-GCM шифрування для всіх повідомлень між нодами
+- **Join Token**: Токен-based система для безпечного приєднання нод (аналогічно Docker Swarm)
+- **TLS підтримка**: Опційне TLS шифрування на рівні транспорту
 
 ## Компоненти
 
@@ -34,11 +36,14 @@ Podman Swarm створений як простий та зручний орке
 - `internal/cluster` - Peer-to-peer кластер
 - `internal/scheduler` - Scheduler для розподілу подів
 - `internal/podman` - Інтеграція з Podman
+- `cmd/psctl` - CLI інструмент для управління кластером
 - `internal/parser` - Парсер Kubernetes маніфестів
 - `internal/discovery` - Service discovery (власна реалізація)
 - `internal/dns` - DNS сервер для резолву сервісів та зовнішніх доменів
 - `internal/ingress` - Ingress контролер
+- `internal/storage` - Персистентне сховище стану та відновлення
 - `internal/security` - Безпека (шифрування, токени, TLS)
+- `internal/psctl` - Бібліотека CLI клієнта
 
 ## Встановлення
 
@@ -174,6 +179,7 @@ curl -X PUT http://localhost:8080/api/v1/dns/whitelist \
 - [TODO_UK.md](TODO_UK.md) - Roadmap розробки та заплановані функції
 - [AGENTS.md](AGENTS.md) - Документація агента
 - [PSCTL_UK.md](PSCTL_UK.md) - Документація CLI інструменту
+- [STORAGE.md](STORAGE.md) - Персистентність стану та відновлення
 - [ARCHITECTURE_UK.md](ARCHITECTURE_UK.md) - Архітектура системи
 - [ROUTING_UK.md](ROUTING_UK.md) - Роутинг HTTP/HTTPS трафіку
 - [SERVICE_COMMUNICATION_UK.md](SERVICE_COMMUNICATION_UK.md) - Комунікація між сервісами (DNS та TCP)

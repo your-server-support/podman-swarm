@@ -85,13 +85,24 @@ The agent consists of multiple components that work together:
   - YAML to Kubernetes object conversion
   - Deployment, Service, Ingress parsing
 
-### 8. API Server (`internal/api`)
+### 8. Storage (`internal/storage`)
+- **Purpose**: Persistent storage for cluster state
+- **Technology**: JSON-based file storage
+- **Functions**:
+  - State persistence (Deployments, Services, Ingresses, Pods)
+  - Automatic state recovery on restart
+  - Periodic backups (hourly)
+  - State synchronization between nodes
+  - Atomic file operations
+
+### 9. API Server (`internal/api`)
 - **Purpose**: REST API for cluster management
 - **Functions**:
   - Manifest deployment
   - Resource management
   - Service discovery queries
   - DNS whitelist management
+  - Automatic state recovery
 
 ## Configuration
 
@@ -203,9 +214,20 @@ The agent stores persistent data in the data directory (default: `/var/lib/podma
 
 ```
 /var/lib/podman-swarm/
-├── encryption.key    # Encryption key for cluster communication
-└── (future: state files)
+├── encryption.key                        # Encryption key for cluster communication
+├── state.json                            # Current cluster state
+└── state-backup-YYYYMMDD-HHMMSS.json    # Periodic backups (hourly)
 ```
+
+### State Management
+
+- **Automatic Persistence**: All changes to Deployments, Services, and Ingresses are automatically saved
+- **Atomic Writes**: Uses temporary file + rename for safe writes
+- **Periodic Backups**: Creates timestamped backups every hour
+- **State Synchronization**: Broadcasts state to peers every 30 seconds
+- **Auto Recovery**: Automatically recovers deployments on agent restart
+
+See [STORAGE.md](STORAGE.md) for detailed information on state persistence.
 
 ## Security
 
@@ -412,6 +434,7 @@ WantedBy=multi-user.target
 
 ## See Also
 
+- [STORAGE.md](STORAGE.md) - State persistence and recovery
 - [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture
 - [SECURITY.md](SECURITY.md) - Security features
 - [ROUTING.md](ROUTING.md) - Traffic routing

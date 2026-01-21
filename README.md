@@ -23,6 +23,8 @@ Podman Swarm is designed to be a simple, easy-to-use container orchestrator that
 - **DNS Whitelist**: Whitelist of external domains for DNS resolution control
 - **Ingress**: Ingress controller on each node for request routing
 - **Load Balancing**: Automatic load balancing between pods
+- **State Persistence**: JSON-based storage with automatic recovery and periodic backups
+- **State Synchronization**: Automatic state sync between nodes every 30 seconds
 - **Encryption**: AES-256-GCM encryption for all messages between nodes
 - **Join Token**: Token-based system for secure node joining (similar to Docker Swarm)
 - **TLS support**: Optional TLS encryption at transport level
@@ -30,6 +32,7 @@ Podman Swarm is designed to be a simple, easy-to-use container orchestrator that
 ## Components
 
 - `cmd/agent` - Agent that runs on each node
+- `cmd/psctl` - CLI tool for cluster management
 - `internal/api` - API server for receiving Kubernetes manifests
 - `internal/cluster` - Peer-to-peer cluster
 - `internal/scheduler` - Scheduler for pod distribution
@@ -38,7 +41,9 @@ Podman Swarm is designed to be a simple, easy-to-use container orchestrator that
 - `internal/discovery` - Service discovery (custom implementation)
 - `internal/dns` - DNS server for resolving services and external domains
 - `internal/ingress` - Ingress controller
+- `internal/storage` - Persistent state storage and recovery
 - `internal/security` - Security (encryption, tokens, TLS)
+- `internal/psctl` - CLI client library
 
 ## Installation
 
@@ -174,6 +179,7 @@ For more details on service communication, see [SERVICE_COMMUNICATION.md](SERVIC
 - [TODO.md](TODO.md) - Development roadmap and planned features
 - [AGENTS.md](AGENTS.md) - Agent documentation
 - [PSCTL.md](PSCTL.md) - CLI tool documentation
+- [STORAGE.md](STORAGE.md) - State persistence and recovery
 - [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture
 - [ROUTING.md](ROUTING.md) - HTTP/HTTPS traffic routing
 - [SERVICE_COMMUNICATION.md](SERVICE_COMMUNICATION.md) - Service communication (DNS and TCP)

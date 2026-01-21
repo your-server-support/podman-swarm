@@ -1,10 +1,12 @@
 .PHONY: build run test clean build-all install
 
+BUILD_TAGS = exclude_graphdriver_btrfs,exclude_graphdriver_devicemapper,containers_image_openpgp
+
 build:
-	go build -o podman-swarm-agent ./cmd/agent
+	CGO_ENABLED=0 go build -tags $(BUILD_TAGS) -o podman-swarm-agent ./cmd/agent
 
 build-psctl:
-	go build -o psctl ./cmd/psctl
+	CGO_ENABLED=0 go build -o psctl ./cmd/psctl
 
 build-all: build build-psctl
 

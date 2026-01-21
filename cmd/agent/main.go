@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -20,6 +21,7 @@ import (
 	"github.com/your-server-support/podman-swarm/internal/podman"
 	"github.com/your-server-support/podman-swarm/internal/scheduler"
 	"github.com/your-server-support/podman-swarm/internal/security"
+	"github.com/your-server-support/podman-swarm/internal/storage"
 )
 
 func main() {
@@ -118,11 +120,30 @@ func main() {
 		logger.Fatalf("Failed to initialize Podman client: %v", err)
 	}
 
+	// Initialize storage
+	storageInstance, err := storage.NewStorage(storage.StorageConfig{
+		DataDir: cfg.DataDir,
+		Logger:  logger,
+	})
+	if err != nil {
+		logger.Fatalf("Failed to initialize storage: %v", err)
+	}
+	logger.Info("Storage initialized successfully")
+
 	// Initialize service discovery
 	discoveryClient := discovery.NewDiscovery(clusterInstance, logger)
 
-	// Set message handler for cluster to forward messages to discovery
-	clusterInstance.SetMessageHandler(discoveryClient.HandleServiceUpdate)
+	// Set message handler for cluster (handles both service discovery and state sync)
+	clusterInstance.SetMessageHandler(func(msg []byte) error {
+		// Try to handle as service discovery message first
+		discoveryClient.HandleServiceUpdate(msg)
+		
+		// Try to handle as state sync message
+		storageInstance.HandleStateSyncMessage(msg)
+		
+		// Always return nil - we handle both message types
+		return nil
+	})
 
 	// Initialize DNS server
 	localNodeIP := clusterInstance.GetLocalNodeAddress()
@@ -162,6 +183,12 @@ func main() {
 	// Initialize parser
 	parserInstance := parser.NewParser()
 
+	// Start periodic backup (every 1 hour)
+	storageInstance.StartPeriodicBackup(1 * time.Hour)
+
+	// Start periodic state sync (every 30 seconds)
+	storageInstance.StartPeriodicSync(30*time.Second, clusterInstance.Broadcast, clusterInstance.GetLocalNodeName())
+
 	// Initialize ingress controller
 	var ingressController *ingress.IngressController
 	if cfg.EnableIngress {
@@ -182,6 +209,7 @@ func main() {
 		ingressController,
 		clusterInstance,
 		dnsServer,
+		storageInstance,
 		apiTokenManager,
 		logger,
 	)
@@ -208,6 +236,9 @@ func main() {
 	} else {
 		logger.Warn("API authentication disabled - this is not recommended for production")
 	}
+
+	// Start state recovery (after cluster is stable)
+	apiInstance.StartStateRecovery()
 
 	// Start API server
 	go func() {

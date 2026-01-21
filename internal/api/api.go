@@ -21,6 +21,7 @@ import (
 	"github.com/your-server-support/podman-swarm/internal/podman"
 	"github.com/your-server-support/podman-swarm/internal/scheduler"
 	"github.com/your-server-support/podman-swarm/internal/security"
+	"github.com/your-server-support/podman-swarm/internal/storage"
 	"github.com/your-server-support/podman-swarm/internal/types"
 )
 
@@ -32,10 +33,11 @@ type API struct {
 	ingress      *ingress.IngressController
 	cluster      *cluster.Cluster
 	dns          *dns.Server
+	storage      *storage.Storage
 	logger       *logrus.Logger
-	deployments  map[string]*types.Deployment
-	services     map[string]*types.Service
-	ingresses    map[string]*types.Ingress
+	deployments  map[string]*types.Deployment // In-memory cache
+	services     map[string]*types.Service    // In-memory cache
+	ingresses    map[string]*types.Ingress    // In-memory cache
 	tokenManager *security.APITokenManager
 }
 
@@ -47,10 +49,11 @@ func NewAPI(
 	ingress *ingress.IngressController,
 	cluster *cluster.Cluster,
 	dns *dns.Server,
+	stor *storage.Storage,
 	tokenManager *security.APITokenManager,
 	logger *logrus.Logger,
 ) *API {
-	return &API{
+	api := &API{
 		parser:       parser,
 		scheduler:    scheduler,
 		podman:       podman,
@@ -58,12 +61,18 @@ func NewAPI(
 		ingress:      ingress,
 		cluster:      cluster,
 		dns:          dns,
+		storage:      stor,
 		tokenManager: tokenManager,
 		logger:       logger,
 		deployments:  make(map[string]*types.Deployment),
 		services:     make(map[string]*types.Service),
 		ingresses:    make(map[string]*types.Ingress),
 	}
+
+	// Load state from storage into memory cache
+	api.loadStateFromStorage()
+
+	return api
 }
 
 func (a *API) SetupRoutes(router *gin.Engine, authEnabled bool) {
@@ -143,6 +152,12 @@ func (a *API) applyDeployment(deployment *appsv1.Deployment) error {
 	key := fmt.Sprintf("%s/%s", dep.Namespace, dep.Name)
 	a.deployments[key] = dep
 
+	// Persist to storage
+	if err := a.storage.SaveDeployment(dep); err != nil {
+		a.logger.Warnf("Failed to persist deployment: %v", err)
+		// Continue anyway - in-memory state is updated
+	}
+
 	// Create pods
 	for i := int32(0); i < dep.DesiredReplicas; i++ {
 		podName := fmt.Sprintf("%s-%d", dep.Name, i)
@@ -191,6 +206,11 @@ func (a *API) applyService(service *corev1.Service) error {
 	key := fmt.Sprintf("%s/%s", svc.Namespace, svc.Name)
 	a.services[key] = svc
 
+	// Persist to storage
+	if err := a.storage.SaveService(svc); err != nil {
+		a.logger.Warnf("Failed to persist service: %v", err)
+	}
+
 	// Register service in discovery for all matching pods
 	pods := a.scheduler.GetAllPods()
 	for _, pod := range pods {
@@ -213,6 +233,11 @@ func (a *API) applyIngress(ingress *networkingv1.Ingress) error {
 
 	key := fmt.Sprintf("%s/%s", ing.Namespace, ing.Name)
 	a.ingresses[key] = ing
+
+	// Persist to storage
+	if err := a.storage.SaveIngress(ing); err != nil {
+		a.logger.Warnf("Failed to persist ingress: %v", err)
+	}
 
 	if err := a.ingress.AddIngress(ing); err != nil {
 		return err
@@ -242,6 +267,10 @@ func (a *API) DeleteManifest(c *gin.Context) {
 			a.scheduler.RemovePod(pod.ID)
 		}
 		delete(a.deployments, key)
+		// Delete from storage
+		if err := a.storage.DeleteDeployment(namespace, name); err != nil {
+			a.logger.Warnf("Failed to delete deployment from storage: %v", err)
+		}
 	}
 
 	// Try to delete service
@@ -253,12 +282,20 @@ func (a *API) DeleteManifest(c *gin.Context) {
 			}
 		}
 		delete(a.services, key)
+		// Delete from storage
+		if err := a.storage.DeleteService(namespace, name); err != nil {
+			a.logger.Warnf("Failed to delete service from storage: %v", err)
+		}
 	}
 
 	// Try to delete ingress
 	if _, ok := a.ingresses[key]; ok {
 		a.ingress.RemoveIngress(namespace, name)
 		delete(a.ingresses, key)
+		// Delete from storage
+		if err := a.storage.DeleteIngress(namespace, name); err != nil {
+			a.logger.Warnf("Failed to delete ingress from storage: %v", err)
+		}
 	}
 
 	c.JSON(200, gin.H{"message": "Manifest deleted successfully"})
@@ -537,6 +574,37 @@ func (a *API) RevokeAPIToken(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "Token revoked successfully",
 	})
+}
+
+// loadStateFromStorage loads state from persistent storage into memory cache
+func (a *API) loadStateFromStorage() {
+	// Load deployments
+	deployments := a.storage.ListDeployments()
+	for _, dep := range deployments {
+		key := fmt.Sprintf("%s/%s", dep.Namespace, dep.Name)
+		a.deployments[key] = dep
+	}
+
+	// Load services
+	services := a.storage.ListServices()
+	for _, svc := range services {
+		key := fmt.Sprintf("%s/%s", svc.Namespace, svc.Name)
+		a.services[key] = svc
+	}
+
+	// Load ingresses
+	ingresses := a.storage.ListIngresses()
+	for _, ing := range ingresses {
+		key := fmt.Sprintf("%s/%s", ing.Namespace, ing.Name)
+		a.ingresses[key] = ing
+		// Re-apply ingress to ingress controller
+		if err := a.ingress.AddIngress(ing); err != nil {
+			a.logger.Warnf("Failed to restore ingress %s: %v", key, err)
+		}
+	}
+
+	a.logger.Infof("Loaded state from storage: %d deployments, %d services, %d ingresses",
+		len(deployments), len(services), len(ingresses))
 }
 
 // Helper functions
