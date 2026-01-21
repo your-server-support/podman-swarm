@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  node1:
+    build: .
+    container_name: podman-swarm-node1
+    environment:
+      - NODE_NAME=node1
+      - BIND_ADDR=0.0.0.0:7946
+      - API_ADDR=0.0.0.0:8080
+      - PODMAN_SOCKET=unix:///run/podman/podman.sock
+      # DNS configuration
+      - DNS_PORT=53
+      - CLUSTER_DOMAIN=cluster.local
+      - UPSTREAM_DNS=8.8.8.8:53,8.8.4.4:53
+      # Ingress configuration
+      - INGRESS_PORT=80
+      - ENABLE_INGRESS=true
+    ports:
+      - "8081:8080"  # API server
+      - "7947:7946"  # Cluster memberlist
+      - "81:80"      # Ingress controller
+      - "5301:53/udp"  # DNS server (UDP)
+      - "5301:53/tcp"  # DNS server (TCP)
+    volumes:
+      - /var/run/podman/podman.sock:/run/podman/podman.sock
+      - node1-data:/var/lib/podman-swarm
+    networks:
+      - podman-swarm
+    privileged: true
+
+  node2:
+    build: .
+    container_name: podman-swarm-node2
+    environment:
+      - NODE_NAME=node2
+      - BIND_ADDR=0.0.0.0:7946
+      - API_ADDR=0.0.0.0:8080
+      - PODMAN_SOCKET=unix:///run/podman/podman.sock
+      - JOIN=node1:7946
+      # DNS configuration
+      - DNS_PORT=53
+      - CLUSTER_DOMAIN=cluster.local
+      - UPSTREAM_DNS=8.8.8.8:53,8.8.4.4:53
+      # Ingress configuration
+      - INGRESS_PORT=80
+      - ENABLE_INGRESS=true
+    ports:
+      - "8082:8080"  # API server
+      - "7948:7946"  # Cluster memberlist
+      - "82:80"      # Ingress controller
+      - "5302:53/udp"  # DNS server (UDP)
+      - "5302:53/tcp"  # DNS server (TCP)
+    volumes:
+      - /var/run/podman/podman.sock:/run/podman/podman.sock
+      - node2-data:/var/lib/podman-swarm
+    networks:
+      - podman-swarm
+    depends_on:
+      - node1
+    privileged: true
+
+networks:
+  podman-swarm:
+    driver: bridge
+
+volumes:
+  node1-data:
+  node2-data:
