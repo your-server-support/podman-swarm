@@ -4,6 +4,38 @@
 
 Podman Swarm is a cluster orchestrator for Podman that provides Kubernetes manifest compatibility and peer-to-peer architecture.
 
+## Project Philosophy
+
+Podman Swarm is designed as a **Docker Swarm replacement** for small to medium-sized clusters (5-50 nodes) with Kubernetes API compatibility. Key principles:
+
+### Core Design Goals
+
+- **Simplicity over complexity** - Easy to deploy and manage, like Docker Swarm
+- **Kubernetes API compatible** - Use standard Kubernetes manifests without full k8s complexity
+- **Lightweight** - Minimal resource footprint, suitable for edge and small deployments
+- **Essential features only** - Focus on core orchestration without enterprise-grade features
+
+### Architecture Principles
+
+- **True peer-to-peer** - All nodes are equal, no master/worker distinction
+  - No single point of failure
+  - No need for dedicated control plane nodes
+  - Every node can handle API requests
+  - Automatic leader election when needed (e.g., scheduling)
+
+- **Security by design**
+  - **Principle of least privilege** - Components run with minimal required permissions
+  - **Rootless by default** - Leverages Podman's rootless capabilities
+  - **Encrypted communication** - AES-256-GCM encryption for all inter-node messages
+  - **Token-based authentication** - Secure node joining with join tokens
+  - **API authentication** - Optional but encouraged API token authentication
+  - **Network isolation** - DNS whitelist for external access control
+
+- **No external dependencies**
+  - No need for etcd or other distributed databases
+  - Uses efficient peer-to-peer synchronization (memberlist)
+  - Self-contained and easy to deploy
+
 ## Components
 
 ### 1. Cluster (internal/cluster)

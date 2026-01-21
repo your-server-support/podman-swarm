@@ -1,5 +1,15 @@
 # Podman Swarm Security
 
+## Security Principles
+
+Podman Swarm follows these core security principles:
+
+1. **Principle of Least Privilege** - Every component runs with minimal required permissions
+2. **Rootless by Default** - Leverages Podman's rootless capabilities for enhanced security
+3. **Secure by Default** - Security features enabled out of the box
+4. **Defense in Depth** - Multiple security layers (encryption, authentication, authorization)
+5. **Zero Trust** - All communication is authenticated and encrypted
+
 ## Communication Encryption
 
 Podman Swarm supports encryption of communication between nodes at two levels:

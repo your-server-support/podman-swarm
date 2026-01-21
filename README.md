@@ -3,7 +3,16 @@
 > ⚠️ **Project Status: Early Development**  
 > This project is in active development and not yet production-ready. APIs and features may change. Use at your own risk in production environments.
 
-A cluster orchestrator for Podman with Kubernetes manifest support.
+**A lightweight Docker Swarm replacement for small to medium-sized clusters with Kubernetes API compatibility.**
+
+Podman Swarm is designed to be a simple, easy-to-use container orchestrator that:
+- **Speaks Kubernetes manifests** (Deployment, Service, Ingress)
+- **Provides Docker Swarm-like simplicity** and ease of deployment
+- **Works great for small to medium clusters** (5-50 nodes)
+- **All nodes are equal** - true peer-to-peer architecture, no master nodes
+- **Security by design** - minimal privileges, runs rootless, secure by default
+- **Doesn't try to be a full Kubernetes replacement** - focused simplicity
+- **Essential features only** - no unnecessary complexity
 
 ## Architecture
 

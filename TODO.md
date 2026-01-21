@@ -1,5 +1,12 @@
 # TODO - Podman Swarm Development Roadmap
 
+> **Project Focus**: Podman Swarm is a Docker Swarm replacement for small to medium-sized clusters with Kubernetes API compatibility. It's not a Kubernetes clone, but a lightweight orchestrator that speaks Kubernetes manifests.
+> 
+> **Core Principles**:
+> - **True peer-to-peer** - All nodes equal, no master nodes
+> - **Security first** - Minimal privileges, rootless, secure by default
+> - **Simplicity** - Easy to deploy and manage
+
 ## ✅ Already Implemented
 
 ### Core Infrastructure
@@ -110,15 +117,29 @@
   - [ ] Implement deployment and service state backup
 
 ### Security Enhancements
+- [ ] **Rootless Mode Improvements**
+  - [ ] Full rootless operation documentation
+  - [ ] Rootless port mapping below 1024 (using slirp4netns)
+  - [ ] Rootless volume management best practices
+  - [ ] SELinux/AppArmor integration for rootless
+
 - [ ] **RBAC (Role-Based Access Control)**
   - [ ] Implement user and service account management
   - [ ] Add role and role binding support
   - [ ] Implement namespace isolation
+  - [ ] Audit logging for security events
 
 - [ ] **Network Policies**
   - [ ] Add network policy support
   - [ ] Implement pod-to-pod network restrictions
   - [ ] Add egress/ingress rules
+  - [ ] DNS-based network policies
+
+- [ ] **Principle of Least Privilege**
+  - [ ] Document minimal required permissions for each component
+  - [ ] Add capability dropping for containers
+  - [ ] Implement read-only root filesystem support
+  - [ ] Add security context constraints
 
 ### Testing
 - [ ] **Unit Tests**
@@ -232,32 +253,23 @@
   - [ ] Improve startup time
   - [ ] Optimize service discovery performance
 
-- [ ] **Scalability**
-  - [ ] Test with 100+ nodes
-  - [ ] Test with 1000+ pods
-  - [ ] Implement efficient state synchronization for large clusters
+- [ ] **Scalability for Target Range**
+  - [ ] Test with 10-20 nodes (typical use case)
+  - [ ] Test with 50+ nodes (upper limit)
+  - [ ] Test with 500+ pods
+  - [ ] Optimize for small to medium cluster sizes
 
 ## 🔵 Future / Research
 
 - [ ] **Service Mesh Integration**
-  - [ ] Research Istio/Linkerd integration
+  - [ ] Research lightweight service mesh options
   - [ ] Add mTLS between services
-  - [ ] Implement traffic management
-
-- [ ] **Multi-Cluster Support**
-  - [ ] Research federation capabilities
-  - [ ] Implement cross-cluster service discovery
-  - [ ] Add multi-cluster networking
+  - [ ] Implement basic traffic management
 
 - [ ] **Advanced Scheduling**
-  - [ ] Implement custom schedulers
   - [ ] Add pod affinity/anti-affinity
   - [ ] Implement resource quotas and limits
-
-- [ ] **GPU Support**
-  - [ ] Add GPU resource management
-  - [ ] Implement GPU scheduling
-  - [ ] Add NVIDIA device plugin
+  - [ ] Add priority classes for pods
 
 ## 📝 Known Issues
 
