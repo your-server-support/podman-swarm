@@ -79,6 +79,7 @@
   - [x] Deployments, Services, Ingresses persistence
   - [x] Pod state tracking
   - [x] Atomic file operations
+  - [x] Unit tests (13 tests covering CRUD, concurrency, backups)
 - [x] **State Recovery** - Automatic recovery on restart
   - [x] Deployment recreation
   - [x] Service re-registration
