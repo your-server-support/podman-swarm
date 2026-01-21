@@ -180,6 +180,7 @@ For more details on service communication, see [SERVICE_COMMUNICATION.md](SERVIC
 - [AGENTS.md](AGENTS.md) - Agent documentation
 - [PSCTL.md](PSCTL.md) - CLI tool documentation
 - [STORAGE.md](STORAGE.md) - State persistence and recovery
+- [TESTING.md](TESTING.md) - Testing guide and coverage
 - [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture
 - [ROUTING.md](ROUTING.md) - HTTP/HTTPS traffic routing
 - [SERVICE_COMMUNICATION.md](SERVICE_COMMUNICATION.md) - Service communication (DNS and TCP)

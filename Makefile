@@ -1,4 +1,4 @@
-.PHONY: build run test clean build-all install
+.PHONY: build run test clean build-all install test-unit test-coverage
 
 BUILD_TAGS = exclude_graphdriver_btrfs,exclude_graphdriver_devicemapper,containers_image_openpgp
 
@@ -11,23 +11,30 @@ build-psctl:
 build-all: build build-psctl
 
 install:
-	go install ./cmd/agent
-	go install ./cmd/psctl
+	install -m 755 podman-swarm-agent /usr/local/bin/
+	install -m 755 psctl /usr/local/bin/
 
 run:
 	./podman-swarm-agent
 
+test-unit:
+	CGO_ENABLED=0 go test -v -tags $(BUILD_TAGS) \
+		./internal/storage \
+		./internal/security \
+		./internal/parser
+
+test-coverage:
+	CGO_ENABLED=0 go test -v -tags $(BUILD_TAGS) \
+		-coverprofile=coverage.out \
+		-covermode=atomic \
+		./internal/storage \
+		./internal/security \
+		./internal/parser
+	go tool cover -html=coverage.out -o coverage.html
+
 test:
-	go test ./...
+	@echo "Running unit tests..."
+	@make test-unit
 
 clean:
-	rm -f podman-swarm-agent psctl
-
-docker-build:
-	docker build -t podman-swarm:latest .
-
-docker-compose-up:
-	docker-compose up -d
-
-docker-compose-down:
-	docker-compose down
+	rm -f podman-swarm-agent psctl coverage.out coverage.html

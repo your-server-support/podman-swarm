@@ -180,6 +180,7 @@ curl -X PUT http://localhost:8080/api/v1/dns/whitelist \
 - [AGENTS.md](AGENTS.md) - Документація агента
 - [PSCTL_UK.md](PSCTL_UK.md) - Документація CLI інструменту
 - [STORAGE.md](STORAGE.md) - Персистентність стану та відновлення
+- [TESTING.md](TESTING.md) - Посібник з тестування та покриття
 - [ARCHITECTURE_UK.md](ARCHITECTURE_UK.md) - Архітектура системи
 - [ROUTING_UK.md](ROUTING_UK.md) - Роутинг HTTP/HTTPS трафіку
 - [SERVICE_COMMUNICATION_UK.md](SERVICE_COMMUNICATION_UK.md) - Комунікація між сервісами (DNS та TCP)
