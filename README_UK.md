@@ -94,12 +94,38 @@ go build -o podman-swarm-agent ./cmd/agent
 
 ## Використання
 
+### Авторизація API
+
+Увімкніть авторизацію API для production:
+
+```bash
+./podman-swarm-agent --enable-api-auth=true
+```
+
+Токен буде згенеровано та виведено в логах. Використовуйте його в API запитах:
+
+```bash
+# Збережіть токен у змінній
+export API_TOKEN="<token-from-logs>"
+
+# Використовуйте в запитах
+curl -H "Authorization: Bearer $API_TOKEN" \
+  http://localhost:8080/api/v1/pods
+```
+
 ### Деплоймент маніфесту
 
 Відправте Kubernetes маніфест на API:
 
 ```bash
+# Без авторизації
 curl -X POST http://localhost:8080/api/v1/manifests \
+  -H "Content-Type: application/yaml" \
+  --data-binary @deployment.yaml
+
+# З авторизацією
+curl -H "Authorization: Bearer $API_TOKEN" \
+  -X POST http://localhost:8080/api/v1/manifests \
   -H "Content-Type: application/yaml" \
   --data-binary @deployment.yaml
 ```
@@ -134,7 +160,16 @@ curl -X PUT http://localhost:8080/api/v1/dns/whitelist \
 ## Документація
 
 - [AGENTS.md](AGENTS.md) - Документація агента
+- [PSCTL_UK.md](PSCTL_UK.md) - Документація CLI інструменту
 - [ARCHITECTURE_UK.md](ARCHITECTURE_UK.md) - Архітектура системи
 - [ROUTING_UK.md](ROUTING_UK.md) - Роутинг HTTP/HTTPS трафіку
 - [SERVICE_COMMUNICATION_UK.md](SERVICE_COMMUNICATION_UK.md) - Комунікація між сервісами (DNS та TCP)
 - [SECURITY_UK.md](SECURITY_UK.md) - Безпека та шифрування
+
+Англійські версії:
+- [README.md](README.md)
+- [PSCTL.md](PSCTL.md)
+- [ARCHITECTURE.md](ARCHITECTURE.md)
+- [ROUTING.md](ROUTING.md)
+- [SERVICE_COMMUNICATION.md](SERVICE_COMMUNICATION.md)
+- [SECURITY.md](SECURITY.md)

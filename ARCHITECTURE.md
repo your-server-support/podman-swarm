@@ -83,6 +83,9 @@ Podman Swarm is a cluster orchestrator for Podman that provides Kubernetes manif
   - `PUT /api/v1/dns/whitelist` - Set DNS whitelist
   - `POST /api/v1/dns/whitelist/hosts` - Add host to whitelist
   - `DELETE /api/v1/dns/whitelist/hosts/:host` - Remove host from whitelist
+  - `POST /api/v1/tokens` - Generate API token
+  - `GET /api/v1/tokens` - List API tokens
+  - `DELETE /api/v1/tokens/:token` - Revoke API token
 
 ## Workflow
 

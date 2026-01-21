@@ -20,21 +20,23 @@ import (
 	"github.com/your-server-support/podman-swarm/internal/parser"
 	"github.com/your-server-support/podman-swarm/internal/podman"
 	"github.com/your-server-support/podman-swarm/internal/scheduler"
+	"github.com/your-server-support/podman-swarm/internal/security"
 	"github.com/your-server-support/podman-swarm/internal/types"
 )
 
 type API struct {
-	parser      *parser.Parser
-	scheduler   *scheduler.Scheduler
-	podman      *podman.Client
-	discovery   *discovery.Discovery
-	ingress     *ingress.IngressController
-	cluster     *cluster.Cluster
-	dns         *dns.Server
-	logger      *logrus.Logger
-	deployments map[string]*types.Deployment
-	services    map[string]*types.Service
-	ingresses   map[string]*types.Ingress
+	parser       *parser.Parser
+	scheduler    *scheduler.Scheduler
+	podman       *podman.Client
+	discovery    *discovery.Discovery
+	ingress      *ingress.IngressController
+	cluster      *cluster.Cluster
+	dns          *dns.Server
+	logger       *logrus.Logger
+	deployments  map[string]*types.Deployment
+	services     map[string]*types.Service
+	ingresses    map[string]*types.Ingress
+	tokenManager *security.APITokenManager
 }
 
 func NewAPI(
@@ -45,24 +47,29 @@ func NewAPI(
 	ingress *ingress.IngressController,
 	cluster *cluster.Cluster,
 	dns *dns.Server,
+	tokenManager *security.APITokenManager,
 	logger *logrus.Logger,
 ) *API {
 	return &API{
-		parser:      parser,
-		scheduler:   scheduler,
-		podman:      podman,
-		discovery:   discovery,
-		ingress:     ingress,
-		cluster:     cluster,
-		dns:         dns,
-		logger:      logger,
-		deployments: make(map[string]*types.Deployment),
-		services:    make(map[string]*types.Service),
-		ingresses:   make(map[string]*types.Ingress),
+		parser:       parser,
+		scheduler:    scheduler,
+		podman:       podman,
+		discovery:    discovery,
+		ingress:      ingress,
+		cluster:      cluster,
+		dns:          dns,
+		tokenManager: tokenManager,
+		logger:       logger,
+		deployments:  make(map[string]*types.Deployment),
+		services:     make(map[string]*types.Service),
+		ingresses:    make(map[string]*types.Ingress),
 	}
 }
 
-func (a *API) SetupRoutes(router *gin.Engine) {
+func (a *API) SetupRoutes(router *gin.Engine, authEnabled bool) {
+	// Apply authentication middleware
+	router.Use(AuthMiddleware(a.tokenManager, authEnabled))
+
 	v1 := router.Group("/api/v1")
 	{
 		v1.POST("/manifests", a.ApplyManifest)
@@ -81,6 +88,10 @@ func (a *API) SetupRoutes(router *gin.Engine) {
 		v1.PUT("/dns/whitelist", a.SetDNSWhitelist)
 		v1.POST("/dns/whitelist/hosts", a.AddDNSWhitelistHost)
 		v1.DELETE("/dns/whitelist/hosts/:host", a.RemoveDNSWhitelistHost)
+		// API Token management endpoints
+		v1.POST("/tokens", a.GenerateAPIToken)
+		v1.GET("/tokens", a.ListAPITokens)
+		v1.DELETE("/tokens/:token", a.RevokeAPIToken)
 	}
 }
 
@@ -456,6 +467,75 @@ func (a *API) RemoveDNSWhitelistHost(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "Host removed from whitelist",
 		"host":    host,
+	})
+}
+
+// API Token management endpoints
+
+// GenerateAPIToken generates a new API token
+func (a *API) GenerateAPIToken(c *gin.Context) {
+	var req struct {
+		Name      string `json:"name"`
+		ExpiresIn int    `json:"expires_in"` // Seconds, 0 means no expiration
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": fmt.Sprintf("Invalid request: %v", err)})
+		return
+	}
+
+	if req.Name == "" {
+		c.JSON(400, gin.H{"error": "Token name is required"})
+		return
+	}
+
+	var expiresAt *time.Time
+	if req.ExpiresIn > 0 {
+		expiry := time.Now().Add(time.Duration(req.ExpiresIn) * time.Second)
+		expiresAt = &expiry
+	}
+
+	token, err := a.tokenManager.GenerateToken(req.Name, expiresAt)
+	if err != nil {
+		c.JSON(500, gin.H{"error": fmt.Sprintf("Failed to generate token: %v", err)})
+		return
+	}
+
+	a.logger.Infof("Generated new API token: %s (expires: %v)", req.Name, expiresAt)
+
+	c.JSON(201, gin.H{
+		"message":    "Token generated successfully",
+		"token":      token,
+		"name":       req.Name,
+		"expires_at": expiresAt,
+	})
+}
+
+// ListAPITokens lists all API tokens (without showing actual token values)
+func (a *API) ListAPITokens(c *gin.Context) {
+	tokens := a.tokenManager.ListTokens()
+	c.JSON(200, gin.H{
+		"tokens": tokens,
+		"count":  len(tokens),
+	})
+}
+
+// RevokeAPIToken revokes an API token
+func (a *API) RevokeAPIToken(c *gin.Context) {
+	token := c.Param("token")
+	if token == "" {
+		c.JSON(400, gin.H{"error": "Token parameter is required"})
+		return
+	}
+
+	if err := a.tokenManager.RevokeToken(token); err != nil {
+		c.JSON(404, gin.H{"error": fmt.Sprintf("Token not found: %v", err)})
+		return
+	}
+
+	a.logger.Infof("Revoked API token: %s", token)
+	c.JSON(200, gin.H{
+		"message": "Token revoked successfully",
 	})
 }
 

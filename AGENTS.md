@@ -116,6 +116,8 @@ The agent consists of multiple components that work together:
 | `--dns-port` | `DNS_PORT` | `53` | DNS server port |
 | `--cluster-domain` | `CLUSTER_DOMAIN` | `cluster.local` | Cluster domain for DNS |
 | `--upstream-dns` | `UPSTREAM_DNS` | `8.8.8.8:53,8.8.4.4:53` | Upstream DNS servers (comma-separated) |
+| `--api-token` | `API_TOKEN` | - | API token for authentication |
+| `--enable-api-auth` | `ENABLE_API_AUTH` | `false` | Enable API authentication |
 
 ### Example Configuration
 
@@ -187,8 +189,13 @@ The agent consists of multiple components that work together:
 - `POST /api/v1/dns/whitelist/hosts` - Add host to whitelist
 - `DELETE /api/v1/dns/whitelist/hosts/:host` - Remove host from whitelist
 
+### API Token Management
+- `POST /api/v1/tokens` - Generate new API token
+- `GET /api/v1/tokens` - List all API tokens
+- `DELETE /api/v1/tokens/:token` - Revoke API token
+
 ### Health
-- `GET /api/v1/health` - Health check endpoint
+- `GET /api/v1/health` - Health check endpoint (no authentication required)
 
 ## Data Directory
 
@@ -209,6 +216,48 @@ The agent stores persistent data in the data directory (default: `/var/lib/podma
 ### Authentication
 - **Join Tokens**: Token-based authentication for node joining (similar to Docker Swarm)
 - **Token Validation**: Tokens are validated when nodes join the cluster
+- **API Authentication**: Bearer token authentication for API endpoints
+- **Token Management**: Generate, list, and revoke API tokens via API
+
+### API Authentication
+
+API authentication can be enabled with the `--enable-api-auth` flag:
+
+```bash
+./podman-swarm-agent --enable-api-auth=true
+```
+
+When enabled, a token will be generated automatically and logged:
+```
+Generated API token: AbC123XyZ...
+Use this token in Authorization header: Bearer AbC123XyZ...
+```
+
+#### Using API with Authentication
+
+```bash
+# Include token in Authorization header
+curl -H "Authorization: Bearer AbC123XyZ..." \
+  http://localhost:8080/api/v1/pods
+```
+
+#### Managing API Tokens
+
+```bash
+# Generate new token
+curl -H "Authorization: Bearer AbC123XyZ..." \
+  -X POST http://localhost:8080/api/v1/tokens \
+  -H "Content-Type: application/json" \
+  -d '{"name": "ci-token", "expires_in": 86400}'
+
+# List tokens
+curl -H "Authorization: Bearer AbC123XyZ..." \
+  http://localhost:8080/api/v1/tokens
+
+# Revoke token
+curl -H "Authorization: Bearer AbC123XyZ..." \
+  -X DELETE http://localhost:8080/api/v1/tokens/<TOKEN>
+```
 
 See [SECURITY.md](SECURITY.md) for detailed security information.
 

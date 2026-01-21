@@ -137,6 +137,25 @@ func main() {
 	// Configure Podman client to use DNS server
 	podmanClient.SetDNS(dnsServer.GetDNSIP())
 
+	// Initialize API token manager
+	apiTokenManager := security.NewAPITokenManager(encryptionKey)
+	apiTokenManager.StartCleanupRoutine()
+
+	// Generate initial API token if provided in config
+	if cfg.APIToken != "" {
+		// Use provided token
+		apiTokenManager.GenerateToken("default", nil)
+		logger.Infof("Using configured API token")
+	} else if cfg.EnableAPIAuth {
+		// Generate a new token
+		token, err := apiTokenManager.GenerateToken("default", nil)
+		if err != nil {
+			logger.Fatalf("Failed to generate API token: %v", err)
+		}
+		logger.Infof("Generated API token: %s", token)
+		logger.Infof("Use this token in Authorization header: Bearer %s", token)
+	}
+
 	// Initialize scheduler
 	schedulerInstance := scheduler.NewScheduler(clusterInstance, logger)
 
@@ -163,6 +182,7 @@ func main() {
 		ingressController,
 		clusterInstance,
 		dnsServer,
+		apiTokenManager,
 		logger,
 	)
 
@@ -181,7 +201,13 @@ func main() {
 	router.Use(cors.New(corsConfig))
 
 	// Setup routes
-	apiInstance.SetupRoutes(router)
+	apiInstance.SetupRoutes(router, cfg.EnableAPIAuth)
+	
+	if cfg.EnableAPIAuth {
+		logger.Info("API authentication enabled")
+	} else {
+		logger.Warn("API authentication disabled - this is not recommended for production")
+	}
 
 	// Start API server
 	go func() {

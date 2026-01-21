@@ -32,6 +32,60 @@ For additional protection, TLS certificates can be used:
   --tls-ca=/path/to/ca.pem
 ```
 
+## API Authentication
+
+Podman Swarm supports API authentication using Bearer tokens:
+
+### Enabling Authentication
+
+```bash
+./podman-swarm-agent --enable-api-auth=true
+```
+
+When API authentication is enabled:
+- All API endpoints (except `/api/v1/health`) require authentication
+- A default token is automatically generated at startup
+- Tokens must be included in the `Authorization` header
+
+### Using API with Authentication
+
+```bash
+# Include token in Authorization header
+curl -H "Authorization: Bearer <TOKEN>" \
+  http://localhost:8080/api/v1/pods
+```
+
+### Managing API Tokens
+
+**Generate new token:**
+```bash
+curl -H "Authorization: Bearer <TOKEN>" \
+  -X POST http://localhost:8080/api/v1/tokens \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "ci-token",
+    "expires_in": 86400
+  }'
+```
+
+**List tokens:**
+```bash
+curl -H "Authorization: Bearer <TOKEN>" \
+  http://localhost:8080/api/v1/tokens
+```
+
+**Revoke token:**
+```bash
+curl -H "Authorization: Bearer <TOKEN>" \
+  -X DELETE http://localhost:8080/api/v1/tokens/<TOKEN_TO_REVOKE>
+```
+
+### Token Expiration
+
+- Tokens can have an expiration time (in seconds)
+- Expired tokens are automatically cleaned up every hour
+- Set `expires_in: 0` for tokens that never expire
+
 ## Join Token
 
 The token system works similarly to Docker Swarm:
@@ -128,6 +182,12 @@ curl -X DELETE http://localhost:8080/api/v1/dns/whitelist/hosts/example.com
    - Enable whitelist to restrict external DNS queries
    - Add only necessary domains
    - Regularly review the list of allowed domains
+
+7. **Enable API authentication:**
+   - Always enable API authentication in production
+   - Generate separate tokens for different clients/services
+   - Set expiration times for temporary tokens
+   - Regularly rotate tokens
 
 ## Production Configuration Example
 

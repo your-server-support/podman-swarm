@@ -5,6 +5,7 @@
 *.so
 *.dylib
 podman-swarm-agent
+psctl
 
 # Test binary
 *.test

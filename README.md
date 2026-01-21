@@ -94,12 +94,38 @@ For more details on security, see [SECURITY.md](SECURITY.md)
 
 ## Usage
 
+### API Authentication
+
+Enable API authentication for production deployments:
+
+```bash
+./podman-swarm-agent --enable-api-auth=true
+```
+
+A token will be generated and displayed in logs. Use it in API requests:
+
+```bash
+# Store token in variable
+export API_TOKEN="<token-from-logs>"
+
+# Use in requests
+curl -H "Authorization: Bearer $API_TOKEN" \
+  http://localhost:8080/api/v1/pods
+```
+
 ### Deploying a manifest
 
 Send a Kubernetes manifest to the API:
 
 ```bash
+# Without authentication
 curl -X POST http://localhost:8080/api/v1/manifests \
+  -H "Content-Type: application/yaml" \
+  --data-binary @deployment.yaml
+
+# With authentication
+curl -H "Authorization: Bearer $API_TOKEN" \
+  -X POST http://localhost:8080/api/v1/manifests \
   -H "Content-Type: application/yaml" \
   --data-binary @deployment.yaml
 ```
@@ -134,6 +160,7 @@ For more details on service communication, see [SERVICE_COMMUNICATION.md](SERVIC
 ## Documentation
 
 - [AGENTS.md](AGENTS.md) - Agent documentation
+- [PSCTL.md](PSCTL.md) - CLI tool documentation
 - [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture
 - [ROUTING.md](ROUTING.md) - HTTP/HTTPS traffic routing
 - [SERVICE_COMMUNICATION.md](SERVICE_COMMUNICATION.md) - Service communication (DNS and TCP)

@@ -83,6 +83,9 @@ Podman Swarm - це кластерний оркестратор для Podman, �
   - `PUT /api/v1/dns/whitelist` - Встановити DNS whitelist
   - `POST /api/v1/dns/whitelist/hosts` - Додати хост до whitelist
   - `DELETE /api/v1/dns/whitelist/hosts/:host` - Видалити хост з whitelist
+  - `POST /api/v1/tokens` - Згенерувати API токен
+  - `GET /api/v1/tokens` - Список API токенів
+  - `DELETE /api/v1/tokens/:token` - Відкликати API токен
 
 ## Потік роботи
 

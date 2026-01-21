@@ -25,6 +25,8 @@ type Config struct {
 	DNSPort          int
 	ClusterDomain    string
 	UpstreamDNS      []string // Upstream DNS servers for forwarding non-cluster queries
+	APIToken         string   // API token for authentication
+	EnableAPIAuth    bool     // Enable API authentication
 }
 
 func Load() *Config {
@@ -49,6 +51,8 @@ func Load() *Config {
 	flag.StringVar(&cfg.ClusterDomain, "cluster-domain", getEnv("CLUSTER_DOMAIN", "cluster.local"), "Cluster domain for DNS")
 	var upstreamDNSStr string
 	flag.StringVar(&upstreamDNSStr, "upstream-dns", getEnv("UPSTREAM_DNS", "8.8.8.8:53,8.8.4.4:53"), "Comma-separated list of upstream DNS servers (IP:port)")
+	flag.StringVar(&cfg.APIToken, "api-token", getEnv("API_TOKEN", ""), "API token for authentication")
+	flag.BoolVar(&cfg.EnableAPIAuth, "enable-api-auth", getEnvBool("ENABLE_API_AUTH", false), "Enable API authentication")
 
 	flag.Parse()
 
